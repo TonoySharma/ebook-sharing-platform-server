@@ -22,26 +22,29 @@ const client = new MongoClient(uri, {
   }
 });
 
+// verifyToken,
+
 async function run() {
   try {
 
+    const db = client.db("ebook_db");
+    // const purchaseHistoryCollection = db.collection("purchase-history")
+    const ebooksCollection = db.collection("ebooks")
+
+    // lemetaded book api
+    app.get("/featuredBook", async (req, res) => {
+      const result = await ebooksCollection.find().limit(6).toArray()
+      res.send(result)
+    });
+    // ebooks Api
+    app.get('/api/ebooks', async (req, res) => {
+      const cursor = ebooksCollection.find();
+      const result = await cursor.toArray();
+
+      res.send(result);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    })
 
 
 
