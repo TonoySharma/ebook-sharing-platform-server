@@ -75,12 +75,17 @@ async function run() {
       res.send(result)
     });
 
-    // ebooks Api
+    //Browse ebooks Api
     app.get('/api/ebooks', async (req, res) => {
-      const result = await ebooksCollection.find().toArray();
+      const {page=1, limit=10}= req.query;
+      const skip = (Number(page) -1 )* Number(limit)
+      // {userId: req.user.id}
+      const result = await ebooksCollection.find().skip(skip).limit(Number(limit)).toArray();
+      const totalData = await ebooksCollection.countDocuments();
+      const totalPage = Math.ceil(totalData/Number(limit))
      
 
-      res.send(result);
+      res.send({data: result, page:Number(page), totalPage});
     })
 
     app.post("/api/ebooks", async (req, res) =>{
