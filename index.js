@@ -30,13 +30,50 @@ async function run() {
     const db = client.db("ebook_db");
     // const purchaseHistoryCollection = db.collection("purchase-history")
     const ebooksCollection = db.collection("ebooks")
+    const subscriptionsCollection = db.collection("subscriptions")
+    const userCollection = db.collection("user")
+
+
+
+    // user pro api
+    app.post("/subscription", async (req, res) => {
+      const{
+        sessionId,
+        priceId,
+        userId,
+      } = req.body;
+
+      const isExist = await subscriptionsCollection.findOne({sessionId})
+      if(isExist){
+        return res.json({msg: "already exist !"})
+      }
+
+      const result = await subscriptionsCollection.insertOne({
+        sessionId,
+        priceId,
+        userId,
+      })
+
+      // update user role
+      await userCollection.updateOne(
+       {_id: new ObjectId(userId)},
+       {$set: {plan: "pro"}}
+      )
+
+      res.json({msg: "payment successfull !"})
+
+
+
+    })
+
+
+
 
     // limetaded book api
-    
-    // app.get("/featuredBook", async (req, res) => {
-    //   const result = await ebooksCollection.find().limit(6).toArray()
-    //   res.send(result)
-    // });
+    app.get("/featuredBook", async (req, res) => {
+      const result = await ebooksCollection.find().limit(8).toArray()
+      res.send(result)
+    });
 
     // ebooks Api
     app.get('/api/ebooks', async (req, res) => {
