@@ -37,15 +37,15 @@ async function run() {
 
     // user pro api
     app.post("/subscription", async (req, res) => {
-      const{
+      const {
         sessionId,
         priceId,
         userId,
       } = req.body;
 
-      const isExist = await subscriptionsCollection.findOne({sessionId})
-      if(isExist){
-        return res.json({msg: "already exist !"})
+      const isExist = await subscriptionsCollection.findOne({ sessionId })
+      if (isExist) {
+        return res.json({ msg: "already exist !" })
       }
 
       const result = await subscriptionsCollection.insertOne({
@@ -56,11 +56,11 @@ async function run() {
 
       // update user role
       await userCollection.updateOne(
-       {_id: new ObjectId(userId)},
-       {$set: {plan: "pro"}}
+        { _id: new ObjectId(userId) },
+        { $set: { plan: "pro" } }
       )
 
-      res.json({msg: "payment successfull !"})
+      res.json({ msg: "payment successfull !" })
 
 
 
@@ -76,39 +76,60 @@ async function run() {
     });
 
     //Browse ebooks Api
-    app.get('/api/ebooks', async (req, res) => {
-      const {page=1, limit=10}= req.query;
-      const skip = (Number(page) -1 )* Number(limit)
-      // {userId: req.user.id}
-      const result = await ebooksCollection.find().skip(skip).limit(Number(limit)).toArray();
-      const totalData = await ebooksCollection.countDocuments();
-      const totalPage = Math.ceil(totalData/Number(limit))
-     
-
-      res.send({data: result, page:Number(page), totalPage});
-    })
-
-    app.post("/api/ebooks", async (req, res) =>{
+  
+    app.post("/api/ebooks", async (req, res) => {
       const ebooksData = req.body;
       // console.log(ebooksData);
 
       const result = await ebooksCollection.insertMany(ebooksData);
 
       // console.log(result);
-      
+
       res.json(result);
-      
+
     })
 
+    // search api 
+
+    app.get("/api/ebooks", async (req, res) => {
+      const { page = 1, limit = 10, search = "" } = req.query;
+
+      const skip = (Number(page) - 1) * Number(limit);
+
+      const query = {};
+
+      if (search) {
+        query.$or = [
+          { title: { $regex: search, $options: "i" } },
+          { writer_name: { $regex: search, $options: "i" } },
+        ];
+      }
+
+      const result = await ebooksCollection
+        .find(query)
+        .skip(skip)
+        .limit(Number(limit))
+        .toArray();
+
+      const totalData = await ebooksCollection.countDocuments(query);
+      const totalPage = Math.ceil(totalData / Number(limit));
+
+      res.send({
+        data: result,
+        page: Number(page),
+        totalPage,
+      });
+    });
+
     // ebooks details api
-    app.get('/api/ebooks/:id', async(req, res) => {
+    app.get('/api/ebooks/:id', async (req, res) => {
       const id = req.params.id;
       const query = {
         _id: new ObjectId(id)
       }
       const result = await ebooksCollection.findOne(query);
 
-        res.send(result);
+      res.send(result);
     })
 
 
