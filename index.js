@@ -10,7 +10,6 @@ app.use(cors());
 app.use(express.json());
 
 
-
 const uri = process.env.MONGO_DB_URI;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -32,6 +31,7 @@ async function run() {
     const ebooksCollection = db.collection("ebooks")
     const subscriptionsCollection = db.collection("subscriptions")
     const userCollection = db.collection("user")
+    const purchasedNowCollection = db.collection('PurchasedNow')
 
 
 
@@ -62,11 +62,38 @@ async function run() {
 
       res.json({ msg: "payment successfull !" })
 
+    })
+    
+    // PurchasedNow api 1
+    app.post("/PurchasedNow", async (req, res) => {
+      const purchasedData = req.body;
+      const result = await purchasedNowCollection.insertOne(purchasedData);
 
-
+      res.json(result);
     })
 
+    // PurchasedNow api 2
+    // app.get("/PurchasedNow", verifyToken, async (req, res) => {
+    //   try {
+ 
+    //     const userEmailOrId = req.user?.email || req.user?.id;
 
+    //     if (!userEmailOrId) {
+    //       return res.status(401).send({ message: "Unauthorized access" });
+    //     }
+
+    //     const query = {
+    //       userEmail: userEmailOrId, 
+    //       paymentStatus: "success"  
+    //     };
+
+    //     const result = await PurchasedNowCollection.find(query).toArray();
+
+    //     res.send(result);
+    //   } catch (error) {
+    //     res.status(500).send({ message: "Internal server error" });
+    //   }
+    // });
 
 
     // limetaded book api
@@ -76,7 +103,6 @@ async function run() {
     });
 
     //Browse ebooks Api
-  
     app.post("/api/ebooks", async (req, res) => {
       const ebooksData = req.body;
       // console.log(ebooksData);
@@ -98,7 +124,7 @@ async function run() {
 
       const query = {};
 
-      if (search) {
+      if (search && search != "undefiend") {
         query.$or = [
           { title: { $regex: search, $options: "i" } },
           { writer_name: { $regex: search, $options: "i" } },
