@@ -32,6 +32,7 @@ async function run() {
     const subscriptionsCollection = db.collection("subscriptions")
     const userCollection = db.collection("user")
     const purchasedNowCollection = db.collection('PurchasedNow')
+    const paymentCollection = db.collection('payment')
 
 
 
@@ -63,19 +64,44 @@ async function run() {
       res.json({ msg: "payment successfull !" })
 
     })
-    
+
+    // payment api 
+    app.post('/payments', async (req, res) => {
+        const paymentData = req.body;
+        const result = await paymentCollection.insertOne(paymentData);
+
+        res.json(result);
+      
+    })
+
     // PurchasedNow api 1
     app.post("/PurchasedNow", async (req, res) => {
       const purchasedData = req.body;
+       
+      // console.log("Received Data:", purchasedData);
+
       const result = await purchasedNowCollection.insertOne(purchasedData);
+     
+      res.json(result);
+    })
+
+
+    //  my PurchasedNow api
+    app.get("/PurchasedNow/:userId", async (req, res) => {
+      const { userId } = req.params;
+      //  console.log(req.params,  'emty');
+
+      const result = await purchasedNowCollection.find({ userId: userId }).toArray();
+       console.log(result, "Received Data!");
 
       res.json(result);
     })
 
-    // PurchasedNow api 2
+
+    // PurchasedNow verifyToken api 
     // app.get("/PurchasedNow", verifyToken, async (req, res) => {
     //   try {
- 
+
     //     const userEmailOrId = req.user?.email || req.user?.id;
 
     //     if (!userEmailOrId) {
