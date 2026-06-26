@@ -33,6 +33,7 @@ async function run() {
     const userCollection = db.collection("user")
     const purchasedNowCollection = db.collection('PurchasedNow')
     const paymentCollection = db.collection('payment')
+    // const purchaseHistoryCollection = db.collection('history')
 
 
 
@@ -65,23 +66,35 @@ async function run() {
 
     })
 
+    // purchaes History api
+    app.get("/purchases/:email", async (req, res) => {
+      const { email } = req.params;
+      // console.log(req.params,  'req.params');
+      
+      const result = await purchasedNowCollection.find({ userEmail: email })
+        .sort({ purchasedAt: -1 }).toArray();
+
+      res.send(result);
+    });
+
+
     // payment api 
     app.post('/payments', async (req, res) => {
-        const paymentData = req.body;
-        const result = await paymentCollection.insertOne(paymentData);
+      const paymentData = req.body;
+      const result = await paymentCollection.insertOne(paymentData);
 
-        res.json(result);
-      
+      res.json(result);
+
     })
 
     // PurchasedNow api 1
     app.post("/PurchasedNow", async (req, res) => {
       const purchasedData = req.body;
-       
+
       // console.log("Received Data:", purchasedData);
 
       const result = await purchasedNowCollection.insertOne(purchasedData);
-     
+
       res.json(result);
     })
 
@@ -92,9 +105,9 @@ async function run() {
       //  console.log(req.params,  'emty');
 
       const result = await purchasedNowCollection.find({ userId: userId }).toArray();
-       console.log(result, "Received Data!");
+      //  console.log(result, "Received Data!");
 
-      res.json(result);
+      return res.json(result);
     })
 
 
@@ -181,7 +194,7 @@ async function run() {
       }
       const result = await ebooksCollection.findOne(query);
 
-      res.send(result);
+      res.json(result);
     })
 
 
