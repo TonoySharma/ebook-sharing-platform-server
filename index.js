@@ -27,13 +27,14 @@ async function run() {
   try {
 
     const db = client.db("ebook_db");
-    // const purchaseHistoryCollection = db.collection("purchase-history")
+    
     const ebooksCollection = db.collection("ebooks")
     const subscriptionsCollection = db.collection("subscriptions")
     const userCollection = db.collection("user")
     const purchasedNowCollection = db.collection('PurchasedNow')
     const paymentCollection = db.collection('payment')
-    // const purchaseHistoryCollection = db.collection('history')
+    const addedBookCollection = db.collection('addedbook')
+
 
 
 
@@ -77,6 +78,13 @@ async function run() {
       res.send(result);
     });
 
+    // added book api
+    app.post("/api/addedbook", async (req, res) => {
+      const addedbook = req.body;
+      const result = await addedBookCollection.insertOne(addedbook)
+
+      res.send(result);
+    })
 
     // payment api 
     app.post('/payments', async (req, res) => {
