@@ -67,6 +67,30 @@ async function run() {
 
     })
 
+    // delete api
+    app.delete("/api/addedbook/:id", async (req, res) => {
+      const { id } = req.params;
+
+      const result = await addedBookCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+
+      res.send(result);
+    });
+
+    // books eddite api
+    app.put("/api/addedbook/:id", async (req, res) => {
+      const { id } = req.params;
+      const updatedData = req.body;
+
+      const result = await addedBookCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updatedData }
+      );
+
+      res.send(result);
+    });
+
     // purchaes History api
     app.get("/purchases/:email", async (req, res) => {
       const { email } = req.params;
@@ -87,7 +111,7 @@ async function run() {
     })
     //  // added book api get
     app.get("/api/my-addedbook/:email", async (req, res) => {
-      const {email} = req.params;
+      const { email } = req.params;
 
       const result = await addedBookCollection.find({ userEmail: email })
         .toArray();
