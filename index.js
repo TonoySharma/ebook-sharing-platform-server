@@ -27,7 +27,7 @@ async function run() {
   try {
 
     const db = client.db("ebook_db");
-    
+
     const ebooksCollection = db.collection("ebooks")
     const subscriptionsCollection = db.collection("subscriptions")
     const userCollection = db.collection("user")
@@ -71,20 +71,29 @@ async function run() {
     app.get("/purchases/:email", async (req, res) => {
       const { email } = req.params;
       // console.log(req.params,  'req.params');
-      
+
       const result = await purchasedNowCollection.find({ userEmail: email })
         .sort({ purchasedAt: -1 }).toArray();
 
       res.send(result);
     });
 
-    // added book api
-    app.post("/api/addedbook", async (req, res) => {
+    // added book api post
+    app.post("/api/my/addedbook", async (req, res) => {
       const addedbook = req.body;
       const result = await addedBookCollection.insertOne(addedbook)
 
       res.send(result);
     })
+    //  // added book api get
+    app.get("/api/my-addedbook/:email", async (req, res) => {
+      const {email} = req.params;
+
+      const result = await addedBookCollection.find({ userEmail: email })
+        .toArray();
+
+      res.send(result);
+    });
 
     // payment api 
     app.post('/payments', async (req, res) => {
