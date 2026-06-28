@@ -4,6 +4,7 @@ dotenv.config();
 const cors = require("cors")
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require('jose-cjs');
 const port = process.env.PORT;
 
 app.use(cors());
@@ -21,7 +22,43 @@ const client = new MongoClient(uri, {
   }
 });
 
-// verifyToken,
+const JWKS = createRemoteJWKSet(new URL(`${process.env.CLIENT_URL}/api/auth/jwks`))
+const verifyToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer")) {
+    return res.status(401).json({ msg: "Unauthorized" });
+  }
+
+  const token = authHeader.split(" ")[1]
+  if (!token) {
+    return res.status(401).json({ msg: "Unauthorized" });
+  }
+
+  try {
+    const { payload } = await jwtVerify(token, JWKS)
+    // console.log(payload);
+    req.user = payload
+
+    next();
+
+  } catch (error) {
+    console.log(error);
+    return res.status(401).json({ msg: "Unauthorized" });
+
+  }
+};
+
+const writerVerify = async (req, res, next) => {
+  const user = req.user;
+  //  console.log('User from writerVerify', user);
+
+  // if(user.role !== "writer" || user.plan !== "pro"){
+  //   return res.status(403).json({ msg: "Forbidden" });
+
+  //  next();
+  // }
+};
 
 async function run() {
   try {
@@ -67,7 +104,7 @@ async function run() {
 
     })
 
-    // delete api
+    //books  delete api
     app.delete("/api/addedbook/:id", async (req, res) => {
       const { id } = req.params;
 
@@ -103,7 +140,7 @@ async function run() {
     });
 
     // added book api post
-    app.post("/api/my/addedbook", async (req, res) => {
+    app.post("/api/my/addedbook", verifyToken, async (req, res) => {
       const addedbook = req.body;
       const result = await addedBookCollection.insertOne(addedbook)
 
@@ -139,7 +176,6 @@ async function run() {
       res.json(result);
     })
 
-
     //  my PurchasedNow api
     app.get("/PurchasedNow/:userId", async (req, res) => {
       const { userId } = req.params;
@@ -150,31 +186,6 @@ async function run() {
 
       return res.json(result);
     })
-
-
-    // PurchasedNow verifyToken api 
-    // app.get("/PurchasedNow", verifyToken, async (req, res) => {
-    //   try {
-
-    //     const userEmailOrId = req.user?.email || req.user?.id;
-
-    //     if (!userEmailOrId) {
-    //       return res.status(401).send({ message: "Unauthorized access" });
-    //     }
-
-    //     const query = {
-    //       userEmail: userEmailOrId, 
-    //       paymentStatus: "success"  
-    //     };
-
-    //     const result = await PurchasedNowCollection.find(query).toArray();
-
-    //     res.send(result);
-    //   } catch (error) {
-    //     res.status(500).send({ message: "Internal server error" });
-    //   }
-    // });
-
 
     // limetaded book api
     app.get("/featuredBook", async (req, res) => {
@@ -237,6 +248,74 @@ async function run() {
 
       res.json(result);
     })
+
+    // admin get user api
+    app.get("/users", async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+    // admin user patch api
+    app.patch("/users/:id/role", async (req, res) => {
+      const { id } = req.params;
+      const { role } = req.body;
+
+      const result = await userCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            role,
+          },
+        }
+      );
+
+      res.send(result);
+    });
+    // admin user delete api
+    app.delete("/users/:id", async (req, res) => {
+      const { id } = req.params;
+
+      const result = await userCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+
+      res.send(result);
+    });
+
+    //  admin book api
+    app.get("/admin/ebooks", async (req, res) => {
+      const result = await ebooksCollection.find().toArray();
+      res.send(result);
+    });
+
+    // admin book patch api
+    app.patch("/admin/ebooks/:id/status", async (req, res) => {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      const result = await ebooksCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            status,
+          },
+        }
+      );
+
+      res.send(result);
+    });
+
+    // admin delete book api
+    app.delete("/admin/ebooks/:id", async (req, res) => {
+      const { id } = req.params;
+
+      const result = await ebooksCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+
+      res.send(result);
+    });
+
+
 
 
 
